@@ -19,4 +19,4 @@ z.yj.r
 hist(d1$std_normal,     breaks = 12)
 hist(d1$log_normal,     breaks = 12)
 hist(d1$yj_transformed, breaks = 12)
-hist(z.yj.r$x.t,       breaks = 12) # Histgram is as same as the above.
+hist(z.yj.r$x.t,        breaks = 12) # Histgram is as same as the above.
