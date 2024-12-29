@@ -10,7 +10,7 @@ program unit_test
   !=======================================
   ! Test data
   !
-  n = 100
+  n = 10000
 
   allocate ( z0(n), x(n), z(n), source = -999.0 )
 
@@ -27,7 +27,7 @@ program unit_test
   call write_csv ( z0, x, z, "yj.csv" )
 
   ! Yeo-Johnson transformation with the above estimated lambda
-  z = yeo_johnson_lambda ( x, lambda = -1.00446498 )
+  z = yeo_johnson_lambda ( x, lambda = -1.00458753 )
 
   call write_csv ( z0, x, z, "yj_lambda.csv" )
 
@@ -46,7 +46,7 @@ program unit_test
   call write_csv ( z0, x, z, "bc.csv" )
 
   ! Box-Cox transformation with the above estimated lambda
-  z = box_cox_lambda ( x, lambda = -0.170742929 )
+  z = box_cox_lambda ( x, lambda = -0.172545776 )
 
   call write_csv ( z0, x, z, "bc_lambda.csv" )
 

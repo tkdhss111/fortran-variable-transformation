@@ -48,7 +48,7 @@ contains
     lambda_opt = golden_section_search ( fun = loglike, &
                                          low = -3.0,    &
                                          upp =  3.0,    &
-                                         tol = 0.01,    &
+                                         tol = 0.001,   &
                                          maximize = .true. )
     !print *, "Optimal lambda:", lambda_opt
 
@@ -59,13 +59,14 @@ contains
     pure real function loglike ( lambda_ )
 
       real, intent(in) :: lambda_
+      real             :: z(size(x))
       real             :: zbar, var_z
       integer n
 
       n = size(x)
       z = yeo_johnson_lambda ( x, lambda_ )
       zbar  = sum(z) / real(n)
-      var_z = sum( ( z - zbar )**2 ) / real(n)
+      var_z = sum(z*z) / real(n) - zbar*zbar
       loglike = -0.5 * n * log(var_z) + (lambda_ - 1.0) * const
 
     end function
@@ -141,6 +142,7 @@ contains
     pure real function loglike ( lambda_ )
 
       real, intent(in) :: lambda_
+      real             :: z(size(x))
       real             :: eta, zbar, var_z
 
       eta = xbar**(lambda_ - 1.0)
@@ -152,7 +154,7 @@ contains
       end if
 
       zbar  = sum(z) / real(n)
-      var_z = sum( ( z - zbar )**2 ) / real(n)
+      var_z = sum(z*z) / real(n) - zbar*zbar
 
       loglike = -0.5 * n * log(var_z)
 

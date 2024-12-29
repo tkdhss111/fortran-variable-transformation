@@ -1,7 +1,5 @@
 # fortran-variable-transformation
 
-(Work in progress)
-
 Fortran pure functions to perform the following variable transformations:
 
 1. Yeo-Johnson transformation [1]
