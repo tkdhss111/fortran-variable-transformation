@@ -18,7 +18,7 @@ contains
       if ( is_eq( lambda, 0.0 ) ) then
         z = log(x + 1.0)
       else
-        z = ( (x + 1)**lambda - 1.0 ) / lambda
+        z = ( (x + 1.0)**lambda - 1.0 ) / lambda
       end if
     else ! For negative values
       if ( is_eq( lambda, 2.0 ) ) then
