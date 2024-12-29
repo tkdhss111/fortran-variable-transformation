@@ -13,7 +13,7 @@ identical(d1$yj_transformed, d2$yj_transformed)
 if (!require(bestNormalize)) install.packages("bestNormalize")
 z.yj.r <- yeojohnson(d1$log_normal, standardize = F)
 z.yj.r
-# N.B. R-estimated lambda (-1.006137) is slightly different from mine (-1.00446498) due to the optimization algolithm.
+# N.B. R-estimated lambda (-1.006137) is slightly different from mine (-1.00446498) due to the optimization algorithm.
 (diff <- sum(z.yj.r$x.t - d1$yj_transformed))
 
 hist(d1$std_normal,     breaks = 12)
