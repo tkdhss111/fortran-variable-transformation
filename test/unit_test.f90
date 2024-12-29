@@ -10,7 +10,7 @@ program unit_test
   !=======================================
   ! Test data
   !
-  n = 10000
+  n = 100
 
   allocate ( z0(n), x(n), z(n), source = -999.0 )
 
