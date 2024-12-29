@@ -3,9 +3,10 @@ module variable_transformation_mo
   implicit none
 
   private
-  public :: yeo_johnson
   public :: yeo_johnson_lambda
+  public :: yeo_johnson
   public :: box_cox_lambda
+  public :: box_cox
 
 contains
 
@@ -35,7 +36,7 @@ contains
 
   end function yeo_johnson_lambda
 
-  function yeo_johnson ( x ) result ( z )
+  pure function yeo_johnson ( x ) result ( z )
 
     real, intent(in) :: x(:)
     real             :: z(size(x))
@@ -44,8 +45,12 @@ contains
 
     const = sum( sign(1.0, x) * log(abs(x) + 1.0) )
 
-    lambda_opt = golden_section_search ( fun = loglike, low = -3.0, upp = 3.0, tol = 0.01, maximize = .true. )
-    print *, "Optimal lambda:", lambda_opt
+    lambda_opt = golden_section_search ( fun = loglike, &
+                                         low = -3.0,    &
+                                         upp =  3.0,    &
+                                         tol = 0.01,    &
+                                         maximize = .true. )
+    !print *, "Optimal lambda:", lambda_opt
 
     z = yeo_johnson_lambda ( x, lambda_opt )
 
@@ -54,15 +59,14 @@ contains
     pure real function loglike ( lambda_ )
 
       real, intent(in) :: lambda_
-      real             :: mu, z(size(x))
-      real             :: mse
+      real             :: zbar, var_z
       integer n
 
       n = size(x)
       z = yeo_johnson_lambda ( x, lambda_ )
-      mu = sum(z) / real(n)
-      mse = sum( ( z - mu )**2 ) / real(n)
-      loglike = -0.5 * n * log(mse) + (lambda_ - 1.0) * const
+      zbar  = sum(z) / real(n)
+      var_z = sum( ( z - zbar )**2 ) / real(n)
+      loglike = -0.5 * n * log(var_z) + (lambda_ - 1.0) * const
 
     end function
 
@@ -72,30 +76,89 @@ contains
   ! Box-Cox Transformation
   !
 
-  pure function box_cox_lambda ( x, lambda ) result ( z )
+  pure function box_cox_lambda ( x, lambda, eps ) result ( z )
 
     real, intent(in) :: x(:)
     real, intent(in) :: lambda
-    real, parameter  :: EPS = 0.01
+    real, optional, intent(in) :: eps
     real             :: x_min
     real             :: xp(size(x)) ! Positive value
     real             :: z(size(x))
+    real             :: eps_
+
+    if ( present( eps ) ) then
+      eps_ = eps
+    else
+      eps_ = 0.01
+    end if
 
     x_min = minval(x) 
 
     if ( x_min <= 0 ) then
-      xp = x - x_min + EPS ! Shift data to the positive region
+      xp = x - x_min + 1.0 ! Shift data to the positive region
     else
       xp = x
     end if
     
-    if ( abs(lambda) < EPS ) then
+    if ( abs(lambda) < eps_ ) then
       z = log(xp)
     else
       z = ( sign(1.0, xp) * abs(xp) ** lambda - 1.0 ) / lambda
     end if
 
   end function box_cox_lambda
+
+  pure function box_cox ( x, eps ) result ( z )
+
+    real,           intent(in) :: x(:)
+    real, optional, intent(in) :: eps
+    real                       :: xbar, ln_x(size(x)), z(size(x))
+    real                       :: lambda_opt
+    real                       :: eps_
+    integer n
+
+    if ( present( eps ) ) then
+      eps_ = eps
+    else
+      eps_ = 0.01
+    end if
+
+    n = size(x)
+    ln_x = log(x)
+    xbar = exp( sum(ln_x) / real(n) ) ! log-sum mean
+
+    lambda_opt = golden_section_search ( fun = loglike, &
+                                         low = -3.0,    &
+                                         upp =  3.0,    &
+                                         tol = 0.001,   &
+                                         maximize = .true. )
+    !print *, "Optimal lambda:", lambda_opt
+
+    z = box_cox_lambda ( x, lambda_opt, eps_ )
+
+  contains
+
+    pure real function loglike ( lambda_ )
+
+      real, intent(in) :: lambda_
+      real             :: eta, zbar, var_z
+
+      eta = xbar**(lambda_ - 1.0)
+
+      if ( abs(lambda_) < eps_ ) then
+        z = ln_x / eta
+      else
+        z = (x**lambda_ - 1.0) / (lambda_ * eta)
+      end if
+
+      zbar  = sum(z) / real(n)
+      var_z = sum( ( z - zbar )**2 ) / real(n)
+
+      loglike = -0.5 * n * log(var_z)
+
+    end function
+
+  end function box_cox 
 
   !====================================
   ! Optimizer
@@ -157,6 +220,10 @@ contains
       x_opt = (low_ + upp_) / 2.0
 
   end function golden_section_search
+
+  !====================================
+  ! Utilities
+  !
 
   pure elemental logical function is_eq ( x, ref )
     real, intent(in) :: x
