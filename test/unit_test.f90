@@ -4,54 +4,71 @@ program unit_test
 
   implicit none
 
-  real, allocatable :: z(:), x(:), z_yj(:)
+  real, allocatable :: z0(:), x(:), z(:)
   integer n
+  
+  !=======================================
+  ! Test data
+  !
+  n = 100
+
+  allocate ( z0(n), x(n), z(n), source = -999.0 )
+
+  z0 = rnorm ( n ) ! Standard normal realizations
+  x = exp(z0)      ! Log normalized
 
   !======================================
   ! Test: Yeo-Johnson Transformation 
   !
-  n = 100
-
-  allocate ( z(n), x(n), z_yj(n), source = -999.0 )
-
-  ! Test data
-  z = rnorm ( n ) ! Standard normal realizations
-  x = exp(z)      ! Log normalized
 
   ! Yeo-Johnson transformation with MLE of lambda
-  z_yj = yeo_johnson ( x )
+  z = yeo_johnson ( x )
 
-  call write_csv ( z, x, z_yj, "data.csv" ) ! for R package comparison
+  call write_csv ( z0, x, z, "yj.csv" )
 
- ! Yeo-Johnson transformation with user lambda
-  z_yj = yeo_johnson_lambda ( x, lambda = -1.00446498 )
+  ! Yeo-Johnson transformation with user lambda (same as above)
+  z = yeo_johnson_lambda ( x, lambda = -1.00446498 )
 
-  call write_csv ( z, x, z_yj, "data_user_lambda.csv" ) ! for R package comparison
+  call write_csv ( z0, x, z, "yj_lambda.csv" )
+
+  ! Yeo-Johnson transformation with user lambda (obtained from R)
+  z = yeo_johnson_lambda ( x, lambda = -1.006137 )
+
+  call write_csv ( z0, x, z, "yj_lambda_r.csv" )
+
+  !======================================
+  ! Test: Yeo-Johnson Transformation 
+  !
+
+  ! Box-Cox transformation with user lambda (obtained from R)
+  z = box_cox_lambda ( x, lambda = -0.1727399 )
+
+  call write_csv ( z0, x, z, "bc_lambda_r.csv" )
 
 contains
 
-  subroutine write_csv ( z, x, z_yj, file )
-    real,         intent(in) :: z(:), x(:), z_yj(:)
+  subroutine write_csv ( z0, x, z, file )
+    real,         intent(in) :: z0(:), x(:), z(:)
     character(*), intent(in) :: file
     integer u, i
     open ( newunit = u, file = file )
-    write ( u, * ) "std_normal, log_normal, yj_transformed" 
+    write ( u, * ) "std_normal, log_normal, transformed" 
     do i = 1, n
-      write ( u, '(*(g0, :, ",") )' )  z(i), x(i), z_yj(i)
-!      print *, "Writing: z =", z(i), "x =", x(i), "z_yj =", z_yj(i)
+      write ( u, '(*(g0, :, ",") )' )  z0(i), x(i), z(i)
+!      print *, "Writing: z0 =", z0(i), "x =", x(i), "z =", z(i)
     end do
     close ( u )
   end subroutine
 
-  subroutine read_csv ( z, x, z_yj, file )
-    real,         intent(out) :: z(:), x(:), z_yj(:)
+  subroutine read_csv ( z0, x, z, file )
+    real,         intent(out) :: z0(:), x(:), z(:)
     character(*), intent(in) :: file
     integer u, i
     open ( newunit = u, file = file )
     read ( u, '()' )
     do i = 1, n
-      read ( u, * ) z(i), x(i), z_yj(i)
-!      print *, "Reading: z =", z(i), "x =", x(i), "z_yj =", z_yj(i)
+      read ( u, * ) z0(i), x(i), z(i)
+!      print *, "Reading: z0 =", z0(i), "x =", x(i), "z =", z(i)
     end do
     close ( u )
   end subroutine
