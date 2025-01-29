@@ -5,6 +5,7 @@ program unit_test
   implicit none
 
   real, allocatable :: z0(:), x(:), z(:)
+  real              :: lambda_opt
   integer n
   
   !=======================================
@@ -36,6 +37,10 @@ program unit_test
 
   call write_csv ( z0, x, z, "yj_lambda_r.csv" )
 
+  lambda_opt = opt_yeo_johnson_lambda ( x )
+
+  print *, 'Yeo-Johnson optimal lambda: ', lambda_opt
+
   !======================================
   ! Test: Box-Cox Transformation 
   !
@@ -54,6 +59,10 @@ program unit_test
   z = box_cox_lambda ( x, lambda = -0.1727399 )
 
   call write_csv ( z0, x, z, "bc_lambda_r.csv" )
+
+  lambda_opt = opt_box_cox_lambda ( x )
+
+  print *, 'Box-Cox optimal lambda: ', lambda_opt
 
 contains
 

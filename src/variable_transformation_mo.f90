@@ -4,8 +4,10 @@ module variable_transformation_mo
 
   private
   public :: yeo_johnson_lambda
+  public :: opt_yeo_johnson_lambda
   public :: yeo_johnson
   public :: box_cox_lambda
+  public :: opt_box_cox_lambda
   public :: box_cox
 
 contains
@@ -13,6 +15,17 @@ contains
   !====================================
   ! Yeo-Johnson Transformation
   !
+  pure function yeo_johnson ( x ) result ( z )
+
+    real, intent(in) :: x(:)
+    real             :: z(size(x))
+    real             :: lambda_opt
+
+    lambda_opt = opt_yeo_johnson_lambda ( x )
+
+    z = yeo_johnson_lambda ( x, lambda_opt )
+
+  end function yeo_johnson
 
   pure elemental function yeo_johnson_lambda ( x, lambda ) result ( z )
 
@@ -36,10 +49,9 @@ contains
 
   end function yeo_johnson_lambda
 
-  pure function yeo_johnson ( x ) result ( z )
+  pure function opt_yeo_johnson_lambda ( x ) result ( lambda_opt )
 
     real, intent(in) :: x(:)
-    real             :: z(size(x))
     real             :: lambda_opt
     real             :: const
 
@@ -50,9 +62,8 @@ contains
                                          upp =  3.0,    &
                                          tol = 0.001,   &
                                          maximize = .true. )
-    !print *, "Optimal lambda:", lambda_opt
 
-    z = yeo_johnson_lambda ( x, lambda_opt )
+    !print *, "Optimal lambda:", lambda_opt
 
   contains
 
@@ -71,11 +82,24 @@ contains
 
     end function
 
-  end function yeo_johnson
+  end function opt_yeo_johnson_lambda 
 
   !====================================
   ! Box-Cox Transformation
   !
+
+  pure function box_cox ( x, eps ) result ( z )
+
+    real,           intent(in) :: x(:)
+    real, optional, intent(in) :: eps
+    real                       :: lambda_opt
+    real                       :: z(size(x))
+
+    lambda_opt = opt_box_cox_lambda ( x, eps ) 
+
+    z = box_cox_lambda ( x, lambda_opt, eps )
+
+  end function box_cox 
 
   pure function box_cox_lambda ( x, lambda, eps ) result ( z )
 
@@ -109,11 +133,11 @@ contains
 
   end function box_cox_lambda
 
-  pure function box_cox ( x, eps ) result ( z )
+  pure function opt_box_cox_lambda ( x, eps ) result ( lambda_opt )
 
     real,           intent(in) :: x(:)
     real, optional, intent(in) :: eps
-    real                       :: xbar, ln_x(size(x)), z(size(x))
+    real                       :: xbar, ln_x(size(x))
     real                       :: lambda_opt
     real                       :: eps_
     integer n
@@ -134,8 +158,6 @@ contains
                                          tol = 0.001,   &
                                          maximize = .true. )
     !print *, "Optimal lambda:", lambda_opt
-
-    z = box_cox_lambda ( x, lambda_opt, eps_ )
 
   contains
 
@@ -160,7 +182,7 @@ contains
 
     end function
 
-  end function box_cox 
+  end function opt_box_cox_lambda 
 
   !====================================
   ! Optimizer
