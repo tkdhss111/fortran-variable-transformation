@@ -56,3 +56,22 @@ hist(bc$log_normal,  breaks = 12)
 hist(bc$transformed, breaks = 12)
 hist(bc.r$x.t,       breaks = 12) # Histgram is as same as the above.
 
+#=====================================
+# Test: Scale Function 
+# N.B. Fortran scale function is different from that of R:
+#       R: scale(x, center = TRUE, scale = TRUE)
+# Fortran: scale(x, mean   = 0.0,     sd = 1.0)
+scaled1 <- read.csv("../build/test/scale_mean0_sd1.csv")
+scaled2 <- read.csv("../build/test/scale_mean2_sd3.csv")
+
+scale(scaled1$transformed)
+z.r1 <- scale(scaled1$log_normal)
+(diff <- sum(z.r1[, 1] - scaled1$transformed))
+hist(z.r1[, 1],           breaks = 12, col = rgb(1.0, 0.0, 1.0, 0.5))
+hist(scaled1$transformed, breaks = 12, col = rgb(0.0, 1.0, 0.0, 0.5), add = T)
+
+scale(scaled2$transformed)
+z.r2 <- scale(scaled2$log_normal)*3+2
+(diff <- sum(z.r2[, 1] - scaled2$transformed))
+hist(z.r2[, 1],           breaks = 12, col = rgb(1.0, 0.0, 1.0, 0.5))
+hist(scaled2$transformed, breaks = 12, col = rgb(0.0, 1.0, 0.0, 0.5), add = T)

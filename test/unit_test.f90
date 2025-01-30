@@ -19,6 +19,17 @@ program unit_test
   x = exp(z0)      ! Log normalized
 
   !======================================
+  ! Test: Scale Function 
+  !
+  z = scale ( x )
+
+  call write_csv ( z0, x, z, "scale_mean0_sd1.csv" )
+
+  z = scale ( x, mean = 2.0, sd = 3.0 )
+
+  call write_csv ( z0, x, z, "scale_mean2_sd3.csv" )
+
+  !======================================
   ! Test: Yeo-Johnson Transformation 
   !
 

@@ -3,6 +3,7 @@ module variable_transformation_mo
   implicit none
 
   private
+  public :: scale
   public :: yeo_johnson_lambda
   public :: opt_yeo_johnson_lambda
   public :: yeo_johnson
@@ -11,6 +12,41 @@ module variable_transformation_mo
   public :: box_cox
 
 contains
+
+  !====================================
+  ! Scaling Function
+  !
+  pure function scale ( x, mean, sd ) result ( z )
+
+    real, intent(in) :: x(:)
+    real             :: z(size(x))
+    real, optional, intent(in) :: mean, sd
+    real                       :: mean_, sd_
+    real                       :: xbar, sd_x
+    integer n
+
+    if ( present( mean ) ) then
+      mean_ = mean
+    else
+      mean_ = 0.0
+    end if
+
+    if ( present( sd ) ) then
+      sd_ = sd
+    else
+      sd_ = 1.0
+    end if
+
+    n    = size(x)
+    xbar = sum(x) / real(n)
+    sd_x = sqrt( sum( (x - xbar)**2 )/(n-1) )
+
+    !print *, 'xbar: ', xbar
+    !print *, 'sd_x: ', sd_x
+
+    z = ( x - xbar ) / sd_x * sd_ + mean_
+
+  end function
 
   !====================================
   ! Yeo-Johnson Transformation
@@ -77,7 +113,7 @@ contains
       n = size(x)
       z = yeo_johnson_lambda ( x, lambda_ )
       zbar  = sum(z) / real(n)
-      var_z = sum(z*z) / real(n) - zbar*zbar
+      var_z = sqrt( sum( (z - zbar)**2 )/(n-1) )
       loglike = -0.5 * n * log(var_z) + (lambda_ - 1.0) * const
 
     end function
@@ -176,7 +212,7 @@ contains
       end if
 
       zbar  = sum(z) / real(n)
-      var_z = sum(z*z) / real(n) - zbar*zbar
+      var_z = sqrt( sum( (z - zbar)**2 )/(n-1) )
 
       loglike = -0.5 * n * log(var_z)
 
