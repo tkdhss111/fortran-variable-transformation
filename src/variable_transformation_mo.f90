@@ -4,6 +4,7 @@ module variable_transformation_mo
 
   private
   public :: scale
+  public :: rnorm
   public :: yeo_johnson_lambda
   public :: opt_yeo_johnson_lambda
   public :: yeo_johnson
@@ -68,7 +69,7 @@ contains
     real, intent(in) :: x
     real, intent(in) :: lambda
     real             :: z
-    
+
     if ( x >= 0.0 ) then ! For positive values
       if ( is_eq( lambda, 0.0 ) ) then
         z = log(x + 1.0)
@@ -111,7 +112,7 @@ contains
       integer n
 
       n = size(x)
-      z = yeo_johnson_lambda ( x, lambda_ )
+      z = yeo_johnson_lambda( x, lambda_ )
       zbar  = sum(z) / real(n)
       var_z = sqrt( sum( (z - zbar)**2 )/(n-1) )
       loglike = -0.5 * n * log(var_z) + (lambda_ - 1.0) * const
@@ -131,9 +132,9 @@ contains
     real                       :: lambda_opt
     real                       :: z(size(x))
 
-    lambda_opt = opt_box_cox_lambda ( x, eps ) 
+    lambda_opt = opt_box_cox_lambda( x, eps )
 
-    z = box_cox_lambda ( x, lambda_opt, eps )
+    z = box_cox_lambda( x, lambda_opt, eps )
 
   end function box_cox 
 
@@ -153,14 +154,14 @@ contains
       eps_ = 0.01
     end if
 
-    x_min = minval(x) 
+    x_min = minval( x )
 
     if ( x_min <= 0 ) then
       xp = x - x_min + 1.0 ! Shift data to the positive region
     else
       xp = x
     end if
-    
+
     if ( abs(lambda) < eps_ ) then
       z = log(xp)
     else
@@ -186,7 +187,7 @@ contains
 
     n = size(x)
     ln_x = log(x)
-    xbar = exp( sum(ln_x) / real(n) ) ! log-sum mean
+    xbar = exp( sum( ln_x ) / real(n) ) ! log-sum mean
 
     lambda_opt = golden_section_search ( fun = loglike, &
                                          low = -3.0,    &
@@ -290,5 +291,23 @@ contains
     real, intent(in) :: ref
     is_eq = abs(x - ref) < epsilon(ref)
   end function is_eq
+
+  ! Box-Muller
+  function rnorm ( n, mean, sd ) result ( z )
+    integer, intent(in) :: n
+    real,    intent(in) :: mean, sd
+    real    :: z(n), u1((n+1)/2), u2((n+1)/2)
+    integer :: m, i
+    m = (n + 1) / 2
+    call random_number( u1 )
+    call random_number( u2 )
+    do i = 1, m
+      z(2*i-1) = sqrt( -2.0 * log(u1(i)) ) * cos(2.0 * acos(-1.0) * u2(i))
+      if (2*i <= n) then
+        z(2*i) = sqrt( -2.0 * log(u1(i)) ) * sin(2.0 * acos(-1.0) * u2(i))
+      end if
+    end do
+    z = mean + sd * z
+  end function rnorm
 
 end module
