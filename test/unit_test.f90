@@ -11,6 +11,8 @@ program unit_test
   !=======================================
   ! Test data
   !
+  call init_random_seed
+
   n = 100
 
   allocate ( z0(n), x(n), z(n), source = -999.0 )
@@ -19,13 +21,13 @@ program unit_test
   x = exp(z0)      ! Log normalized
 
   !======================================
-  ! Test: Scale Function 
+  ! Test: Standardization Function 
   !
-  z = scale ( x )
+  z = std ( x )
 
   call write_csv ( z0, x, z, "scale_mean0_sd1.csv" )
 
-  z = scale ( x, mean = 2.0, sd = 3.0 )
+  z = std ( x, mean = 2.0, sd = 3.0 )
 
   call write_csv ( z0, x, z, "scale_mean2_sd3.csv" )
 
@@ -77,21 +79,21 @@ program unit_test
 
 contains
 
-  ! Box-Muller transformation to generate standard normal variables
-  function rnorm ( n ) result ( z )
-    integer, intent(in) :: n
-    real u1, u2, z(n) 
-    integer, allocatable :: seeds(:)
-    integer i, size
-    call random_seed(size = size)
-    allocate( seeds(size), source = 777 )
-    call random_seed(put = seeds)
-    do i = 1, n
-      call random_number(u1)
-      call random_number(u2)
-      z(i) = sqrt(-2.0 * log(u1)) * cos(2.0 * 3.141592653589793 * u2)
-    end do
-  end function
+  !! Box-Muller transformation to generate standard normal variables
+  !function rnorm ( n ) result ( z )
+  !  integer, intent(in) :: n
+  !  real u1, u2, z(n) 
+  !  integer, allocatable :: seeds(:)
+  !  integer i, size
+  !  call random_seed(size = size)
+  !  allocate( seeds(size), source = 777 )
+  !  call random_seed(put = seeds)
+  !  do i = 1, n
+  !    call random_number(u1)
+  !    call random_number(u2)
+  !    z(i) = sqrt(-2.0 * log(u1)) * cos(2.0 * 3.141592653589793 * u2)
+  !  end do
+  !end function
 
   subroutine write_csv ( z0, x, z, file )
     real,         intent(in) :: z0(:), x(:), z(:)

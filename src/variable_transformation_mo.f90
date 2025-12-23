@@ -3,7 +3,8 @@ module variable_transformation_mo
   implicit none
 
   private
-  public :: scale
+  public :: std
+  public :: init_random_seed
   public :: rnorm
   public :: yeo_johnson_lambda
   public :: opt_yeo_johnson_lambda
@@ -15,9 +16,9 @@ module variable_transformation_mo
 contains
 
   !====================================
-  ! Scaling Function
+  ! Standardization Function
   !
-  pure function scale ( x, mean, sd ) result ( z )
+  pure function std ( x, mean, sd ) result ( z )
 
     real, intent(in) :: x(:)
     real             :: z(size(x))
@@ -292,12 +293,34 @@ contains
     is_eq = abs(x - ref) < epsilon(ref)
   end function is_eq
 
+  ! Seed
+  subroutine init_random_seed ()
+    integer :: seed_size, clock, i
+    integer, allocatable :: seed(:)
+    call random_seed( size = seed_size )
+    allocate( seed(seed_size) )
+    call system_clock( count = clock )
+    seed = clock + 37 * [(i, i = 0, seed_size - 1)]
+    call random_seed( put = seed )
+  end subroutine init_random_seed
+
   ! Box-Muller
   function rnorm ( n, mean, sd ) result ( z )
-    integer, intent(in) :: n
-    real,    intent(in) :: mean, sd
-    real    :: z(n), u1((n+1)/2), u2((n+1)/2)
-    integer :: m, i
+    integer,        intent(in) :: n
+    real, optional, intent(in) :: mean, sd
+    real                       :: mean_, sd_
+    real                       :: z(n), u1((n+1)/2), u2((n+1)/2)
+    integer                    :: m, i
+    if ( present( mean ) ) then
+      mean_ = mean
+    else
+      mean_ = 0.0
+    end if
+    if ( present( sd ) ) then
+      sd_ = sd
+    else
+      sd_ = 1.0
+    end if
     m = (n + 1) / 2
     call random_number( u1 )
     call random_number( u2 )
@@ -307,7 +330,7 @@ contains
         z(2*i) = sqrt( -2.0 * log(u1(i)) ) * sin(2.0 * acos(-1.0) * u2(i))
       end if
     end do
-    z = mean + sd * z
+    z = mean_ + sd_ * z
   end function rnorm
 
 end module
